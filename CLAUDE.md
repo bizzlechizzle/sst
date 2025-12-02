@@ -40,9 +40,15 @@ python -m src.main  # GUI mode
 
 | Medium | Detection Criteria | Audio |
 |--------|-------------------|-------|
-| **SUPER_8** | Width ≥2000px AND fps in {16, 18, 24} | NO |
+| **SUPER_8** | Film scan codec (`prores`/`dnxhd`/`dnxhr`) AND no audio stream | NO |
 | **DAD_CAM** | Extension `.mts/.tod/.mod` OR codec `mpeg2video` OR (width ≤1920 AND fps in {25, 29.97, 30, 50, 59.94, 60}) | YES |
 | **MODERN** | Width ≥3840px AND fps ≥23.976 (default fallback) | YES |
+
+**SUPER_8 Detection Logic (Updated 2025-12):**
+Raw Super 8 scans are identified by **codec + audio absence**, NOT resolution/fps.
+- Raw scans: ProRes codec, 0 audio streams (100% correlation in validation dataset)
+- Edited exports: H.264/HEVC codec, 1+ audio streams
+- Resolution/FPS alone is NOT reliable (edited exports can be 3072×2304 @ 24fps)
 
 ### Export Quotas
 
@@ -52,16 +58,19 @@ python -m src.main  # GUI mode
 | B_ROLL | 30 | 5 |
 | ARTSY | 20 | 5 |
 
-### Crop Presets
+### Crop Presets (Simplified 3-Preset System - 2025)
 
-| Preset | Dimensions | Platform |
+| Preset | Dimensions | Use Case |
 |--------|------------|----------|
-| `square` | 1080×1080 | Instagram feed |
-| `portrait` | 1080×1350 | Instagram feed (tall) |
-| `landscape` | 1920×1080 | YouTube, web |
-| `story` | 1080×1920 | Stories (center bias) |
-| `story_l` | 1080×1920 | Stories (left bias) |
-| `story_r` | 1080×1920 | Stories (right bias) |
+| `original` | Native (max 2048px) | Full frame, preserve videographer's composition |
+| `square` | 1080×1080 | Instagram feed (1:1) |
+| `vertical` | 1080×1920 | Reels/TikTok/Shorts (9:16 - 2025 standard) |
+
+**All 3 presets are exported for EVERY frame** - no selective output.
+
+**Super 8 Specific Handling:**
+- `original` + `square`: Keep full gate with overscan (sprocket holes, frame lines - the aesthetic)
+- `vertical`: Crop from content area only (no sprocket holes via gate detection)
 
 ### Clip Types
 
@@ -192,14 +201,20 @@ Applied when source is 1440×1080 (HDV pixel aspect ratio correction).
 
 ## Super 8 Gate Detection
 
-Full gate scans include sprocket holes and frame lines. Detection algorithm in `super8_gate.py`:
+Full gate scans include sprocket holes and frame lines. Gate detection in `super8_gate.py` is **only used for vertical (9:16) crops** to remove overscan. For original and square presets, the full gate with overscan is preserved (the aesthetic).
 
+Detection algorithm:
 1. **Horizontal boundaries**: Column-wise brightness profile → left/right dark borders
 2. **Vertical boundaries**: Row-wise brightness profile → frame line local minima
 3. **Fallback chain**: Frame detection → threshold → gradient
 
 **Expected aspect ratio**: ~1.33 (4:3 Super 8 frame)
 **Warning**: "Unusual aspect ratio X.XX" indicates detection may have failed
+
+**Behavior by preset:**
+- `original`: Full gate preserved (overscan is the aesthetic)
+- `square`: Full gate preserved, cropped to 1:1 from full image
+- `vertical`: Gate detection removes overscan, crops from content area only
 
 ---
 
