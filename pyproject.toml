@@ -1,0 +1,89 @@
+[project]
+name = "social-screenshot-tool"
+version = "1.0.0"
+description = "Automatically extract beautiful screenshots and clips from wedding videos for social media"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [
+    {name = "Tyler", email = "tyler@example.com"}
+]
+keywords = ["wedding", "video", "screenshot", "social media", "instagram"]
+
+dependencies = [
+    # === GUI ===
+    "PySide6>=6.5.0",
+    
+    # === Image Processing ===
+    "Pillow>=10.0.0",
+    "opencv-python>=4.8.0",
+    
+    # === ML - Core ===
+    "torch>=2.0.0",
+    "torchvision>=0.15.0",
+    "numpy>=1.24.0",
+    
+    # === ML - CLIP & Aesthetics ===
+    "open-clip-torch>=2.20.0",
+    
+    # === ML - Face Detection ===
+    "insightface>=0.7.3",
+    "onnxruntime>=1.15.0",  # CPU version works on all platforms; GPU acceleration automatic on CUDA systems
+    
+    # === Audio Analysis ===
+    "librosa>=0.10.0",
+    "soundfile>=0.12.0",
+    # silero-vad is loaded via torch.hub, no pip install needed
+    
+    # === Video Processing ===
+    "scenedetect[opencv]>=0.6.1",
+    "ffmpeg-python>=0.2.0",
+    
+    # === Utilities ===
+    "tqdm>=4.65.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "ruff>=0.0.270",
+    "mypy>=1.0.0",
+]
+
+cpu = [
+    # Alternative for systems without NVIDIA GPU
+    "onnxruntime>=1.15.0",
+]
+
+[project.scripts]
+sst = "src.main:main"
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
+
+[tool.black]
+line-length = 100
+target-version = ['py310', 'py311']
+
+[tool.ruff]
+line-length = 100
+select = ["E", "F", "W", "I", "N", "UP", "B", "C4"]
+ignore = ["E501"]  # Line length handled by black
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_ignores = true
+disallow_untyped_defs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-v --tb=short"
